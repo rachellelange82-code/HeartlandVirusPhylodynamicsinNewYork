@@ -1,0 +1,2 @@
+# Time-scaled phylogenetic analyses for Heartland virus 
+To assess temporal signal of Heartland virus strains TempEST v1.5.3 and BEAST v1.10 were used. A Bayesian Evaluation of Temporal Signal (BETS) was conducted using BEAST v1.10. XML files (BEAST v1.10 input), Combined Log files (BEAST v1.10 output), and an Annotated Tree file (BEAST v1.10 output) based on the Heartland virus glycoprotein and RNA-dependent RNA polymerase are available in this folder. 
