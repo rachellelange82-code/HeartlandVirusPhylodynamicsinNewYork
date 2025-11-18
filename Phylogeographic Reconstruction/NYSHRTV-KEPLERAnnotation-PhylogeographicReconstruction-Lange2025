@@ -1,0 +1,30 @@
+library(treeio)
+library(dplyr)
+library(tibble)
+beast_tree <- read.beast("AnnotatedMCCTrees")
+setwd("C:/Users/rache/Desktop/Tree Files to Combine")
+beast_tree <- read.beast("AnnotatedMCCTrees")
+phy <- beast_tree@phylo
+meta <- as_tibble(beast_tree@data)
+meta <- meta %>% mutate(node = as.character(node))
+edges <- as_tibble(phy$edge) %>%
+rename(parent = V1, node = V2) %>%
+mutate(parent = as.character(parent), node = as.character(node))
+library(dplyr)
+transitions <- edges %>%
+left_join(meta, by = "node") %>%  # child's info
+rename(destination = Location, time_end = height) %>%
+left_join(meta, by = c("parent" = "node")) %>%  # parent's info
+rename(origin = Location, time_start = height)
+transitions <- transitions %>%
+filter(origin != destination)
+location_coords <- data.frame(location = c("Suffolk_NY", "Jasper_GA", "Oklahoma_OK", "Andrew_MO", "Maury_TN", "Bourbon_KS", "StLouis_MO", "Ashland_KY"),lat = c(40.94, 33.11, 35.59, 39.59, 35.37, 37.51, 38.63, 38.46),lon = c(-72.68, -83.41, -97.49, -94.48, -87.05, -94.51, -90.19, -82.65))
+transitions <- transitions %>%
+left_join(location_coords, by = c("origin" = "location")) %>%
+rename(lat_start = lat, lon_start = lon) %>%
+left_join(location_coords, by = c("destination" = "location")) %>%
+rename(lat_end = lat, lon_end = lon)
+sapply(transitions, class)
+transitions_clean <- transitions %>%
+select(where(~ !is.list(.)))
+write.csv(transitions_clean, "discrete_phylo_migration_v2.csv", row.names = FALSE)

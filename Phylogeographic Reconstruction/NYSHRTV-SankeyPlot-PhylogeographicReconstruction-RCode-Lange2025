@@ -1,0 +1,407 @@
+setwd("C:/Users/rache/Desktop/HRTV/Figures/2025/Spatial Reconstruction/Spatial - Tree Files - BEAST")
+install.packages("remotes")
+remotes::install_github("bomeara/santree")
+library(ape)
+library(santree)
+library(plotly)
+install.packages("plotly")
+library(plotly)
+my_tree<-read.nexus("AnnotatedMCCTrees")
+plotly_obj<-santree::convert_phylo_to_plotly(my_tree)
+santree::convert_to_plotly_santree(plotly_obj)
+library(ape)
+santree::convert_to_plotly_santree(plotly_obj)
+combined_tree<-ape::read.nexus("CombinedTrees")
+sankey_plot<-santree::convert_to_plotly_santree(combined_tree)
+sankey_plot<-santree::convert_to_plotly_santree(my_tree)
+sankey_plot
+sankey_plot<-santree:convert_phylo_to_sankey(combined_tree)
+sankey_plot<-santree::convert_phylo_to_sankey(combined_tree)
+library(ape)
+tip_metadata<-data.frame(tip=tree$tip.label,location=sub(".*\\|(.*)$","\\1",tree$tip.label))
+tip_metadata<-data.frame(tip=my_tree$tip.label,location=sub(".*\\|(.*)$","\\1",tree$tip.label))
+tip_metadata<-data.frame(tip=combined_tree$tip.label,location=sub(".*\\|(.*)$","\\1",tree$tip.label))
+tip_metadata<-data.frame(tip=my_tree$tip.label,location=sub(".*\\|(.*)$","\\1",tree$tip.label))
+library(treeio)
+library(ggtree)
+library(dplyr)
+setwd("C:/Users/rache/Desktop/HRTV/Figures/2025/Spatial Reconstruction/Spatial - Tree Files - BEAST")
+mcc<-read.beast("AnnotatedMCCTrees")
+df<-as_tibble(mcc)
+edges <- mcc@phylo$edge
+edge_states <- data.frame(
+parent = edges[,1],
+child = edges[,2]
+) %>%
+left_join(df %>% select(node, parent_loc = location), by = c("parent" = "node")) %>%
+left_join(df %>% select(node, child_loc = location), by = c("child" = "node"))
+colnames(df)
+edges <- mcc@phylo$edge
+edge_states <- data.frame(
+parent = edges[,1],
+child  = edges[,2]
+) %>%
+left_join(df %>% select(node, parent_loc = Location),
+by = c("parent" = "node")) %>%
+left_join(df %>% select(node, child_loc = Location),
+by = c("child" = "node"))
+migrations <- edge_states %>%
+filter(parent_loc != child_loc)
+migration_summary <- migrations %>%
+count(parent_loc, child_loc, name = "count") %>%
+arrange(desc(count))
+library(networkD3)
+colnames(migration_summary)
+library(ggplot2)
+library(ggalluvial)
+install.packages("ggalluvial")
+library(ggalluvial)
+migration_long <- migration_summary %>%
+rename(From = parent_loc, To = child_loc, Flow = count)
+ggplot(migration_long,
+aes(axis1 = From, axis2 = To, y = Flow)) +
+geom_alluvium(aes(fill = From), width = 1/12) +
+geom_stratum(width = 1/12, fill = "grey90", color = "black") +
+geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+scale_x_discrete(limits = c("From", "To"), expand = c(.05, .05)) +
+labs(title = "Viral Migration Between Regions",
+y = "Number of transitions") +
+theme_minimal()
+region_colors <- c("Suffolk_NY"="#800080","Jasper_GA"="#3B7D23","Oklahoma_OK"="#89D3F4","Andrew_MO"="#404040","Maury_TN"="#FFFF00","Bourbon_KS"="#C00000","StLouis_MO"="#404040","Ashland_KY"="#E78D33")
+ggplot(migration_long,
+aes(axis1 = From, axis2 = To, y = Flow)) +
+geom_alluvium(aes(fill = From), width = 1/12, alpha = 0.8) +
+geom_stratum(width = 1/12, fill = "grey90", color = "black") +
+geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+scale_x_discrete(limits = c("From", "To"), expand = c(.05, .05)) +
+scale_fill_manual(values = region_colors) +
+labs(title = "Viral Migration Between Regions",
+y = "Weighted transitions") +
+theme_minimal()
+edge_states <- data.frame(
+parent = mcc@phylo$edge[,1],
+child  = mcc@phylo$edge[,2]
+) %>%
+left_join(df %>% select(node, parent_loc = Location,
+parent_prob = Location.prob),
+by = c("parent" = "node")) %>%
+left_join(df %>% select(node, child_loc = Location,
+child_prob = Location.prob),
+by = c("child" = "node"))
+migrations2 <- edge_states %>%
+filter(parent_loc != child_loc) %>%
+mutate(weight = parent_prob * child_prob)
+migrations <- edge_states %>%
+filter(parent_loc != child_loc) %>%
+mutate(weight = parent_prob * child_prob)
+migration_summary <- migrations %>%
+group_by(parent_loc, child_loc) %>%
+summarise(Flow = sum(weight, na.rm = TRUE), .groups = "drop") %>%
+arrange(desc(Flow))
+View(migration_long)
+View(migrations)
+View(edge_states)
+edge_states_2 <- data.frame(
+parent = mcc@phylo$edge[,1],
+child  = mcc@phylo$edge[,2]
+) %>%
+left_join(df %>% select(node, parent_loc = Location,
+parent_prob = Location.prob),
+by = c("parent" = "node")) %>%
+left_join(df %>% select(node, child_loc = Location,
+child_prob = Location.prob),
+by = c("child" = "node"))
+# add posterior probs from df
+edge_states <- data.frame(
+parent = mcc@phylo$edge[,1],
+child  = mcc@phylo$edge[,2]
+) %>%
+left_join(df %>% select(node, parent_loc = Location,
+parent_prob = Location.prob),
+by = c("parent" = "node")) %>%
+left_join(df %>% select(node, child_loc = Location,
+child_prob = Location.prob),
+by = c("child" = "node"))
+library(dplyr)
+edge_states_2 <- data.frame(
+parent = mcc@phylo$edge[,1],
+child  = mcc@phylo$edge[,2]
+) %>%
+left_join(df %>% select(node, parent_loc = Location,
+parent_prob = Location.prob),
+by = c("parent" = "node")) %>%
+left_join(df %>% select(node, child_loc = Location,
+child_prob = Location.prob),
+by = c("child" = "node"))
+library(dplyr)
+edge_states <- data.frame(
+parent = mcc@phylo$edge[,1],
+child  = mcc@phylo$edge[,2]
+) %>%
+left_join(as_tibble(df) %>%
+select(node, parent_loc = Location,
+parent_prob = Location.prob),
+by = c("parent" = "node")) %>%
+left_join(as_tibble(df) %>%
+select(node, child_loc = Location,
+child_prob = Location.prob),
+by = c("child" = "node"))
+migrations <- edge_states %>%
+filter(parent_loc != child_loc) %>%
+mutate(weight = parent_prob * child_prob)
+str(edge_states$parent_prob)
+str(edge_states$child_prob)
+mutate(
+parent_prob = as.numeric(parent_prob),
+child_prob  = as.numeric(child_prob),
+weight = parent_prob * child_prob
+)
+edge_states <- data.frame(
+parent = mcc@phylo$edge[,1],
+child  = mcc@phylo$edge[,2]
+) %>%
+left_join(as_tibble(df) %>%
+mutate(Location.prob = as.numeric(Location.prob)) %>%
+select(node, parent_loc = Location,
+parent_prob = Location.prob),
+by = c("parent" = "node")) %>%
+left_join(as_tibble(df) %>%
+mutate(Location.prob = as.numeric(Location.prob)) %>%
+select(node, child_loc = Location,
+child_prob = Location.prob),
+by = c("child" = "node"))
+migrations <- edge_states %>%
+filter(parent_loc != child_loc) %>%
+mutate(weight = parent_prob * child_prob)
+migration_summary <- migrations %>%
+group_by(parent_loc, child_loc) %>%
+summarise(Flow = sum(weight, na.rm = TRUE), .groups = "drop") %>%
+arrange(desc(Flow))
+ggplot(migration_summary,
+aes(axis1 = parent_loc, axis2 = child_loc, y = Flow)) +
+geom_alluvium(aes(fill = parent_loc), width = 1/12, alpha = 0.8) +
+geom_stratum(width = 1/12, fill = "grey90", color = "black") +
+geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+scale_x_discrete(limits = c("From", "To"), expand = c(.05, .05)) +
+scale_fill_manual(values = region_colors) +
+labs(title = "Posterior-weighted Viral Migration",
+y = "Posterior-weighted transitions") +
+theme_minimal()
+library(ggplot2)
+library(ggplot)
+install.packages("ggplot")
+library(ggplot2)
+ggplot2(migration_summary,
+aes(axis1 = parent_loc, axis2 = child_loc, y = Flow)) +
+geom_alluvium(aes(fill = parent_loc), width = 1/12, alpha = 0.8) +
+geom_stratum(width = 1/12, fill = "grey90", color = "black") +
+geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+scale_x_discrete(limits = c("From", "To"), expand = c(.05, .05)) +
+scale_fill_manual(values = region_colors) +
+labs(title = "Posterior-weighted Viral Migration",
+y = "Posterior-weighted transitions") +
+theme_minimal()
+library(ggalluvial)
+library(ggplot2)
+ggplot(migration_summary,
++        aes(axis1 = parent_loc, axis2 = child_loc, y = Flow)) +
++     geom_alluvium(aes(fill = parent_loc), width = 1/12, alpha = 0.8) +
++     geom_stratum(width = 1/12, fill = "grey90", color = "black") +
++     geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
++     scale_x_discrete(limits = c("From", "To"), expand = c(.05, .05)) +
++     scale_fill_manual(values = region_colors) +
++     labs(title = "Posterior-weighted Viral Migration",
++          y = "Posterior-weighted transitions") +
+ggplot(migration_summary,
+aes(axis1 = parent_loc, axis2 = child_loc, y = Flow)) +
+geom_alluvium(aes(fill = parent_loc), width = 1/12, alpha = 0.8) +
+geom_stratum(width = 1/12, fill = "grey90", color = "black") +
+geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+scale_x_discrete(limits = c("From", "To"), expand = c(.05, .05)) +
+scale_fill_manual(values = region_colors) +
+labs(title = "Posterior-weighted Viral Migration",
+y = "Posterior-weighted transitions") +
+theme_minimal()
+region_names<-c("Andrew_MO"="Andrew County, MO","Bourbon_KS"="Bourbon County, KS","Jasper_GA"="Jasper County, GA","Maury_TN"="Maury County, TN",="Suffolk_NY"="Suffolk County, NY","Ashland_KY"="Ashland County, KY","Oklahoma_OK"="Oklahoma County, OK","StLouis_MO"="St. Louis County, MO")
+region_names<-c("Andrew_MO"="Andrew County, MO","Bourbon_KS"="Bourbon County, KS","Jasper_GA"="Jasper County, GA","Maury_TN"="Maury County, TN","Suffolk_NY"="Suffolk County, NY","Ashland_KY"="Ashland County, KY","Oklahoma_OK"="Oklahoma County, OK","StLouis_MO"="St. Louis County, MO")
+migration_summary <- migrations %>%
+group_by(parent_loc, child_loc) %>%
+summarise(Flow = sum(weight, na.rm = TRUE), .groups = "drop") %>%
+mutate(
+parent_loc = recode(parent_loc, !!!region_names),
+child_loc  = recode(child_loc,  !!!region_names)
+)
+ggplot(migration_summary,
+aes(axis1 = parent_loc, axis2 = child_loc, y = Flow)) +
+geom_alluvium(aes(fill = parent_loc), width = 1/12, alpha = 0.8) +
+geom_stratum(width = 1/12, fill = "grey90", color = "black") +
+geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+scale_x_discrete(limits = c("From", "To"), expand = c(.05, .05)) +
+scale_fill_manual(values = region_colors) +
+labs(title = "Posterior-weighted Viral Migration",
+y = "Posterior-weighted transitions") +
+theme_minimal()
+region_colors <- c("Suffolk County, NY"="#800080","Jasper County, GA"="#3B7D23","Oklahoma County, OK"="#89D3F4","Andrew County, MO"="#404040","Maury County, TN"="#FFFF00","Bourbon County, KS"="#C00000","St. Louis County, MO"="#404040","Ashland County, KY"="#E78D33")
+ggplot(migration_summary,
+aes(axis1 = parent_loc, axis2 = child_loc, y = Flow)) +
+geom_alluvium(aes(fill = parent_loc), width = 1/12, alpha = 0.8) +
+geom_stratum(width = 1/12, fill = "grey90", color = "black") +
+geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+scale_x_discrete(limits = c("From", "To"), expand = c(.05, .05)) +
+scale_fill_manual(values = region_colors) +
+labs(title = "Posterior-weighted Viral Migration",
+y = "Posterior-weighted transitions") +
+theme_minimal()
+ggplot(migration_summary,
+aes(axis1 = parent_loc, axis2 = child_loc, y = Flow)) +
+geom_alluvium(aes(fill = parent_loc), width = 1/12, alpha = 0.8) +
+geom_stratum(width = 1/8, fill = "grey90", color = "black") +
+geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+scale_x_discrete(limits = c("Origin", "Destination"), expand = c(.05, .05)) +
+scale_fill_manual(values = region_colors) +
+labs(title = "Posterior-weighted Viral Migration",
+y = "Posterior-weighted transitions") +
+theme_minimal()
+ggplot(migration_summary,
+aes(axis1 = parent_loc, axis2 = child_loc, y = Flow)) +
+geom_alluvium(aes(fill = parent_loc), width = 1/6, alpha = 0.8) +
+geom_stratum(width = 1/6, fill = "black", color = "black") +
+geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+scale_x_discrete(limits = c("Origin", "Destination"), expand = c(.05, .05)) +
+scale_fill_manual(values = region_colors) +
+labs(title = "Posterior-weighted Viral Migration",
+y = "Posterior-weighted transitions") +
+theme_minimal()
+ggplot(migration_summary,
+aes(axis1 = parent_loc, axis2 = child_loc, y = Flow)) +
+geom_alluvium(aes(fill = parent_loc), width = 1/12, alpha = 0.8) +
+geom_stratum(width = 1/12, fill = "black", color = "black") +
+geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+scale_x_discrete(limits = c("Origin", "Destination"), expand = c(.05, .05)) +
+scale_fill_manual(values = region_colors) +
+labs(title = "Posterior-weighted Viral Migration",
+y = "Posterior-weighted transitions") +
+theme_minimal()
+ggplot(migration_summary,
+aes(axis1 = parent_loc, axis2 = child_loc, y = Flow)) +
+geom_alluvium(aes(fill = parent_loc), width = 1/12, alpha = 0.8) +
+geom_stratum(width = 1/12, fill = "grey90", color = "black") +
+geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+scale_x_discrete(limits = c("Origin", "Destination"), expand = c(.05, .05)) +
+scale_fill_manual(values = region_colors) +
+labs(title = "Posterior-weighted Viral Migration",
+y = "Posterior-weighted transitions") +
+theme_minimal()
+theme(axis.title.x = element_text(color = "black", family = "Arial", size = 14),
+axis.title.y = element_text(color = "black", family = "Arial", size = 14))
+theme(text = element_text(family = "Arial", size = 12),
+legend.title = element_text(family = "Arial", size = 12),
+legend.text  = element_text(family = "Arial", size = 12))
+library(ggrepel)
+install.packages("ggrepel")
+library(ggrepel)
+geom_text_repel(stat = "stratum", aes(label = after_stat(stratum)),
+direction = "y", nudge_x = 0.2, size = 3.5, family = "Arial")
+library(ggplot2)
+library(ggalluvial)
+library(ggrepel)
+ggplot(migration_summary,
+aes(axis1 = parent_loc, axis2 = child_loc, y = Flow)) +
+geom_alluvium(aes(fill = parent_loc), width = 1/12, alpha = 0.8) +
+geom_stratum(width = 1/12, fill = "grey90", color = "black") +
+geom_text_repel(stat = "stratum", aes(label = after_stat(stratum)),
+direction = "y", nudge_x = 0.25, size = 3.5, family = "Arial") +
+scale_x_discrete(limits = c("Origin", "Destination"), expand = c(.05, .05)) +
+scale_fill_manual(values = region_colors) +
+labs(title = "Posterior-weighted Viral Migration",
+y = "Posterior-weighted transitions",
+x = NULL) +   # removes default grey "axis1"/"axis2"
+theme_minimal() +
+theme(
+text = element_text(family = "Arial", size = 12),
+axis.title.x = element_text(color = "black", size = 14),
+axis.title.y = element_text(color = "black", size = 14),
+legend.title = element_text(size = 12),
+legend.text  = element_text(size = 12)
+)
+ggplot(migration_summary,
+aes(axis1 = parent_loc, axis2 = child_loc, y = Flow)) +
+geom_alluvium(aes(fill = parent_loc), width = 1/12, alpha = 0.8) +
+geom_stratum(width = 1/12, fill = "grey90", color = "black") +
+scale_x_discrete(limits = c("Origin", "Destination"), expand = c(.05, .05)) +
+scale_fill_manual(values = region_colors) +
+labs(title = "Posterior-weighted Viral Migration",
+y = "Posterior-weighted transitions",
+x = NULL,
+fill = "Location Origin") +  # legend title
+theme_minimal() +
+theme(
+text = element_text(family = "Arial", size = 12),
+axis.title.x = element_text(color = "black", size = 14),
+axis.title.y = element_text(color = "black", size = 14),
+legend.title = element_text(size = 12),
+legend.text  = element_text(size = 12)
+)
+ggplot(migration_summary,
+aes(axis1 = parent_loc, axis2 = child_loc, y = Flow)) +
+geom_alluvium(aes(fill = parent_loc), width = 1/12, alpha = 0.8) +
+geom_stratum(width = 1/12, fill = "grey90", color = "black") +
+scale_x_discrete(limits = c("Origin", "Destination"), expand = c(.05, .05)) +
+scale_fill_manual(values = region_colors) +
+labs(
+y = "Posterior-weighted transitions",
+x = NULL,
+fill = "Location Origin") +  # legend title
+theme_minimal() +
+theme(
+text = element_text(family = "Arial", size = 12),
+axis.title.x = element_text(color = "black", size = 14),
+axis.title.y = element_text(color = "black", size = 14),
+legend.title = element_text(size = 12),
+legend.text  = element_text(size = 12)
+)
+ggsave("viral_migration_sankey.png",
+plot = last_plot(),   # or replace with your plot object, e.g., p
+width = 8,           # width in inches
+height = 6,          # height in inches
+dpi = 300)           # resolution in dots per inch
+ggplot(migration_summary,
++        aes(axis1 = parent_loc, axis2 = child_loc, y = Flow)) +
++     geom_alluvium(aes(fill = parent_loc), width = 1/12, alpha = 0.8) +
++     geom_stratum(width = 1/12, fill = "grey90", color = "black") +
++     geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
++     scale_x_discrete(limits = c("Origin", "Destination"), expand = c(.05, .05)) +
++     scale_fill_manual(values = region_colors) +
++     labs(title = "Posterior-weighted Viral Migration",
++          y = "Posterior-weighted transitions") +
+ggplot(migration_summary,
+aes(axis1 = parent_loc, axis2 = child_loc, y = Flow)) +
+geom_alluvium(aes(fill = parent_loc), width = 1/12, alpha = 0.8) +
+geom_stratum(width = 1/12, fill = "grey90", color = "black") +
+geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+scale_x_discrete(limits = c("From", "To"), expand = c(.05, .05)) +
+scale_fill_manual(values = region_colors) +
+labs(title = "Posterior-weighted Viral Migration",
+y = "Posterior-weighted transitions") +
+theme_minimal()
+library(treeio)
+library(dplyr)
+library(tibble)
+library(rgbif)
+library(sf)
+library(ggplot2)
+library(concaveman)
+library(rnaturalearth)
+library(ggalluvial)
+library(santree)
+citation("treeio")
+citation("dplyr")
+citation("tibble")
+citation("rgbif")
+citation("sf")
+citation("ggplot2")
+citation("concaveman")
+citation("Rnaturalearth")
+citation("rnaturalearth")
+citation("ggalluvial")
+citation("santree")
